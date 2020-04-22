@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.61"
+    jacoco
 }
 
 allprojects {
@@ -14,6 +15,11 @@ allprojects {
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "jacoco")
+
+    tasks.jacocoTestReport {
+        reports
+    }
 
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
