@@ -60,6 +60,32 @@ class FileLoaderView : View() {
                 }
             }
         }
+        button("TODO") {
+            action {
+                val fileDecoder = PdfFileDecoder();
+                val wordCounter = LanguageToolWordCounter(Language.ENGLISH)
+                val dictionary = TranslationDictionary.createFromReader(translationDictionary!!.reader())
+                val exporter = CsvWordExporter()
+
+                val text = fileDecoder.read(book!!.inputStream())
+                val words = wordCounter.countWords(text, dictionary.getLemmas()).keys
+                val knownWordsList = knownWords!!.readLines()
+                val unknownWords = words.minus(knownWordsList)
+                        .map { dictionary.getRepresentationAndTranslatedForm(it) }
+                        .map { it.representationForm to it.translatedForm }
+                        .toMap()
+
+                val output = File("flashcards.csv").writer()
+
+                exporter.export(unknownWords).copyTo(output)
+
+                output.close()
+
+                if (words.minus(knownWordsList).isNotEmpty()) {
+                    knownWords!!.appendText(words.minus(knownWordsList).joinToString("\n") + "\n")
+                }
+            }
+        }
     }
 
 }

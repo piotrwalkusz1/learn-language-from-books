@@ -1,17 +1,10 @@
 package com.piotrwalkusz.learnlanguagefrombooks
 
-import com.piotrwalkusz.learnlanguagefrombooks.util.NodeListWrapper
 import com.piotrwalkusz.learnlanguagefrombooks.util.getChildrenByTagName
 import com.piotrwalkusz.learnlanguagefrombooks.util.getFirstChildByTagName
-import com.piotrwalkusz.learnlanguagefrombooks.util.toList
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
-
-fun main() {
-    FreeDictEngPol().parse("/home/piotr/Projects/learn-language-from-books/scripts/a.xml")
-}
 
 class FreeDictEngPol {
 
@@ -25,21 +18,23 @@ class FreeDictEngPol {
             val position: String?
     )
 
-    fun parse(path: String) {
-        val file = File(path)
+    fun parse(file: File): String {
         val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+        val wordNodes = document.getFirstChildByTagName("div")?.getChildrenByTagName("entry")
+                ?: throw IllegalStateException("No div node in root node")
+        val words = parseWordNodes(wordNodes)
 
-        val wordNodes = document.getElementsByTagName("div").item(0).childNodes
-
-        parseWordNodes(wordNodes).forEach {
-            println(it.basicForm + " - " + it.translations.joinToString { tran -> tran.value + " (" + tran.position + ")" })
-        }
+        return words.joinToString("\n") { convertWordToDictionaryEntry(it) }
     }
 
-    private fun parseWordNodes(wordNodes: NodeList): List<Word> {
-        return NodeListWrapper(wordNodes)
-                .filterIsInstance<Element>()
-                .map { parseWordNode(it) }
+    private fun convertWordToDictionaryEntry(word: Word): String {
+        val translations = word.translations.joinToString { it.value }
+
+        return "${word.basicForm.toLowerCase()};${word.basicForm};$translations"
+    }
+
+    private fun parseWordNodes(wordNodes: List<Element>): List<Word> {
+        return wordNodes.map { parseWordNode(it) }
     }
 
     private fun parseWordNode(wordNode: Element): Word {
